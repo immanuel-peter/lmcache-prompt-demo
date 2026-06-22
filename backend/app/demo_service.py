@@ -574,6 +574,41 @@ class DemoCatalog:
     def backend_capabilities(self) -> BackendCapabilitiesResponse:
         return CAPABILITIES
 
+    def analysis_catalog(
+        self, tenant_id: str
+    ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+        """Return prompt and chunk rows for pin extrapolation analysis."""
+        with self._lock:
+            prompts: list[dict[str, object]] = []
+            chunks: list[dict[str, object]] = []
+
+            for prompt in self._prompts.values():
+                if prompt.tenant_id != tenant_id:
+                    continue
+                prompts.append(
+                    {
+                        "prompt_id": prompt.prompt_id,
+                        "decoded_preview": prompt.decoded_preview,
+                        "token_count": prompt.token_count,
+                        "chunk_hashes": list(prompt.chunk_hashes),
+                    }
+                )
+                for chunk_hash in prompt.chunk_hashes:
+                    chunk = self._chunks.get(chunk_hash)
+                    if chunk is None or not chunk.present:
+                        continue
+                    chunks.append(
+                        {
+                            "chunk_hash": chunk.chunk_hash,
+                            "prompt_id": chunk.prompt_id,
+                            "token_count": chunk.token_count,
+                            "location": chunk.location.value,
+                            "pinned": chunk.pinned,
+                            "decoded_preview": chunk.decoded_preview,
+                        }
+                    )
+            return prompts, chunks
+
     def _get_prompt(self, prompt_id: str, tenant_id: str) -> PromptState:
         prompt = self._prompts.get(prompt_id)
         if prompt is None or prompt.tenant_id != tenant_id:

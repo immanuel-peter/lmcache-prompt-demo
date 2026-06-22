@@ -1,12 +1,11 @@
 "use client";
 
 import { ChunkCard } from "@/components/chunk-card";
-import { Badge } from "@/components/ui/badge";
 import type { CacheChunk, CacheLocation } from "@/lib/types";
 import { LOCATION_LABELS } from "@/lib/types";
 import { cn, formatBytes } from "@/lib/utils";
 import { useDroppable } from "@dnd-kit/core";
-import { HardDrive, Cpu, Zap } from "lucide-react";
+import { Cpu, HardDrive, Zap } from "lucide-react";
 
 const TIER_ICONS = {
   LocalGPUBackend: Zap,
@@ -14,25 +13,10 @@ const TIER_ICONS = {
   LocalDiskBackend: HardDrive,
 };
 
-const TIER_STYLES = {
-  LocalGPUBackend: {
-    border: "border-amber-500/20",
-    header: "text-amber-300",
-    glow: "shadow-[inset_0_1px_0_rgba(245,158,11,0.15)]",
-    badge: "gpu" as const,
-  },
-  LocalCPUBackend: {
-    border: "border-cyan-500/20",
-    header: "text-cyan-300",
-    glow: "shadow-[inset_0_1px_0_rgba(34,211,238,0.15)]",
-    badge: "cpu" as const,
-  },
-  LocalDiskBackend: {
-    border: "border-indigo-500/20",
-    header: "text-indigo-300",
-    glow: "shadow-[inset_0_1px_0_rgba(129,140,248,0.15)]",
-    badge: "disk" as const,
-  },
+const TIER_CLASS = {
+  LocalGPUBackend: "tier-gpu",
+  LocalCPUBackend: "tier-cpu",
+  LocalDiskBackend: "tier-disk",
 };
 
 interface StorageTierColumnProps {
@@ -52,58 +36,56 @@ export function StorageTierColumn({
 }: StorageTierColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: location });
   const Icon = TIER_ICONS[location];
-  const styles = TIER_STYLES[location];
 
   return (
     <section
       ref={setNodeRef}
       className={cn(
-        "glass flex min-h-[420px] flex-col rounded-2xl border p-4 transition-all",
-        styles.border,
-        styles.glow,
-        isOver && "drop-zone-active animate-pulse-glow",
+        "panel flex h-[clamp(420px,calc(100vh_-_340px),720px)] flex-col p-3.5 transition-colors",
+        TIER_CLASS[location],
+        isOver && "drop-active",
       )}
     >
-      <header className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div
-            className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-lg bg-white/5",
-              styles.header,
-            )}
-          >
-            <Icon className="h-4 w-4" />
-          </div>
-          <div>
-            <h2
-              className={cn(
-                "font-[family-name:var(--font-syne)] text-sm font-semibold tracking-wide",
-                styles.header,
-              )}
-            >
+      <header className="mb-3.5 flex items-center justify-between border-b border-[var(--line)] pb-3.5">
+        <div className="flex items-center gap-2.5">
+          <span className="tier-dot" />
+          <Icon className="h-4 w-4 text-[var(--fg-muted)]" />
+          <div className="leading-tight">
+            <h2 className="text-[13px] font-semibold text-[var(--fg)]">
               {LOCATION_LABELS[location]}
             </h2>
-            <p className="text-[10px] text-slate-500">{location}</p>
+            <p className="font-mono text-[10px] text-[var(--fg-subtle)]">
+              {location}
+            </p>
           </div>
         </div>
-        <Badge variant={styles.badge}>{chunks.length} chunks</Badge>
+        <div className="text-right leading-tight">
+          <p className="font-mono text-[13px] tabular-nums text-[var(--fg)]">
+            {chunks.length}
+          </p>
+          <p className="text-[10px] text-[var(--fg-subtle)]">chunks</p>
+        </div>
       </header>
 
-      <div className="mb-3 flex items-center justify-between text-[10px] text-slate-500">
-        <span>{formatBytes(bytesEstimate)} estimated</span>
+      <div className="mb-3 flex items-center justify-between text-[10.5px]">
+        <span className="font-mono text-[var(--fg-subtle)]">
+          {formatBytes(bytesEstimate)}
+        </span>
         {observedOnly ? (
-          <span className="text-amber-400/80">read-only</span>
+          <span className="text-[#e0b878]">read-only</span>
         ) : supportsPin ? (
-          <span className="text-emerald-400/70">pin · evict · move</span>
+          <span className="text-[var(--fg-subtle)]">pin · evict · move</span>
         ) : null}
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 overflow-y-auto pr-1">
+      <div className="scroll-thin flex flex-1 flex-col gap-2.5 overflow-y-auto pr-0.5">
         {chunks.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-white/10 py-12 text-center">
-            <p className="text-xs text-slate-500">Drop chunks here</p>
+          <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-[var(--line)] py-12 text-center">
+            <p className="text-[12px] text-[var(--fg-subtle)]">
+              {observedOnly ? "Nothing resident" : "Drop chunks here"}
+            </p>
             {!observedOnly && (
-              <p className="mt-1 text-[10px] text-slate-600">
+              <p className="mt-1 text-[10.5px] text-[var(--fg-subtle)]/70">
                 Drag from CPU ↔ External
               </p>
             )}

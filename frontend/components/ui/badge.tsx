@@ -7,12 +7,12 @@ interface BadgeProps {
 }
 
 const variantStyles = {
-  default: "bg-blue-500/15 text-blue-300 border-blue-500/25",
-  gpu: "bg-amber-500/15 text-amber-300 border-amber-500/25",
-  cpu: "bg-cyan-500/15 text-cyan-300 border-cyan-500/25",
-  disk: "bg-indigo-500/15 text-indigo-300 border-indigo-500/25",
-  pinned: "bg-emerald-500/15 text-emerald-300 border-emerald-500/25",
-  muted: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+  default: "text-[var(--accent-bright)] border-[var(--accent-line)]",
+  gpu: "text-[#e0b878] border-[#d99a3a]/30",
+  cpu: "text-[#8fb6f9] border-[#4f8ff7]/30",
+  disk: "text-[#b0b3f7] border-[#8b8ff5]/30",
+  pinned: "text-[#86efac] border-[#4ade80]/30",
+  muted: "text-[var(--fg-subtle)] border-[var(--line)]",
 };
 
 export function Badge({
@@ -23,7 +23,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+        "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium tracking-wide",
         variantStyles[variant],
         className,
       )}

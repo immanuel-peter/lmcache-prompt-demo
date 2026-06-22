@@ -1,4 +1,19 @@
 services:
+  skills-proxy:
+    build:
+      context: ./skills-proxy
+    environment:
+      VERCEL_TOKEN: ${VERCEL_TOKEN:-}
+      VERCEL_ORG_ID: ${VERCEL_ORG_ID:-}
+      VERCEL_PROJECT_ID: ${VERCEL_PROJECT_ID:-}
+    ports:
+      - "${SKILLS_PROXY_PORT:-8787}:8787"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+
   api:
     build:
       context: ./backend
@@ -13,8 +28,12 @@ services:
       DEMO_TENANT_ID: ${DEMO_TENANT_ID:-demo-tenant}
       SQLITE_PATH: /data/catalog.sqlite3
       CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      SKILLS_PROXY_URL: ${SKILLS_PROXY_URL:-http://skills-proxy:8787}
     volumes:
       - api-data:/data
+    depends_on:
+      skills-proxy:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
       interval: 10s

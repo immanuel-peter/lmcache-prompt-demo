@@ -1,7 +1,8 @@
 "use client";
 
-import { Header } from "@/components/header";
+import { RegisterPromptDialog } from "@/components/register-prompt-dialog";
 import { StatsBar } from "@/components/stats-bar";
+import { Button } from "@/components/ui/button";
 import { StorageTierColumn } from "@/components/storage-tier-column";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -34,7 +35,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { ChunkCard } from "@/components/chunk-card";
-import { Trash2 } from "lucide-react";
+import { RefreshCw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -47,11 +48,11 @@ function EvictDropZone() {
     <div
       ref={setNodeRef}
       className={cn(
-        "glass flex items-center justify-center gap-2 rounded-xl border border-dashed border-red-500/25 px-4 py-3 text-xs text-red-300/80 transition-all",
-        isOver && "drop-zone-active border-red-400/50 bg-red-950/20",
+        "flex items-center justify-center gap-2 rounded-xl border border-dashed border-red-500/20 px-4 py-3 text-[12px] text-red-300/70 transition-colors",
+        isOver && "border-red-400/50 bg-red-500/[0.06] text-red-200",
       )}
     >
-      <Trash2 className="h-4 w-4" />
+      <Trash2 className="h-3.5 w-3.5" />
       Drop here to evict from tier
     </div>
   );
@@ -218,8 +219,10 @@ export function PromptRegistryDemo() {
     return (
       <div className="flex flex-1 items-center justify-center py-32">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-blue-500/30 border-t-blue-400" />
-          <p className="text-sm text-slate-400">Loading prompt registry…</p>
+          <div className="mx-auto mb-4 h-7 w-7 animate-spin rounded-full border-2 border-[var(--line-strong)] border-t-[var(--accent)]" />
+          <p className="text-[13px] text-[var(--fg-muted)]">
+            Loading prompt registry…
+          </p>
         </div>
       </div>
     );
@@ -231,25 +234,35 @@ export function PromptRegistryDemo() {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <Header
-        tenantId={tenantId}
-        defaultModel={DEFAULT_MODEL}
-        onRefresh={refresh}
-        onRegistered={refresh}
-        refreshing={refreshing}
-      />
+      <div className="mb-5 flex flex-wrap items-center justify-end gap-2">
+        <Button
+          variant="outline"
+          onClick={refresh}
+          disabled={refreshing}
+        >
+          <RefreshCw
+            className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`}
+          />
+          Refresh
+        </Button>
+        <RegisterPromptDialog
+          tenantId={tenantId}
+          defaultModel={DEFAULT_MODEL}
+          onRegistered={refresh}
+        />
+      </div>
 
       <StatsBar summary={summary} connectivity={connectivity} />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
-        <Badge variant="muted">double-click chunk → pin</Badge>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Badge variant="muted">double-click → pin</Badge>
         <Badge variant="muted">drag CPU ↔ disk → move</Badge>
         <Badge variant="muted">drop on evict zone → remove</Badge>
-        <Badge variant="gpu">GPU → read-only</Badge>
+        <Badge variant="gpu">GPU is read-only</Badge>
       </div>
 
       <div
-        className="grid gap-4 lg:grid-cols-3"
+        className="grid gap-3.5 lg:grid-cols-3"
         onDoubleClick={(e) => {
           const card = (e.target as HTMLElement).closest("[data-chunk-hash]");
           if (!card) return;
@@ -283,9 +296,9 @@ export function PromptRegistryDemo() {
         <EvictDropZone />
       </div>
 
-      <DragOverlay>
+      <DragOverlay dropAnimation={null}>
         {activeChunk ? (
-          <div className="w-72 rotate-2 opacity-90">
+          <div className="w-72 opacity-95 shadow-2xl shadow-black/50">
             <ChunkCard chunk={activeChunk} index={0} />
           </div>
         ) : null}

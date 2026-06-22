@@ -32,62 +32,83 @@ export function ChunkCard({ chunk, index }: ChunkCardProps) {
       data-chunk-hash={chunk.chunk_hash}
       style={{
         ...style,
-        animationDelay: `${index * 60}ms`,
+        animationDelay: `${index * 45}ms`,
       }}
       className={cn(
-        "chunk-card glass fade-up group cursor-grab rounded-xl p-4 active:cursor-grabbing",
+        "card rise rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3.5",
+        chunk.observed_only
+          ? "cursor-not-allowed"
+          : "cursor-grab active:cursor-grabbing",
         isDragging && "dragging z-50",
-        chunk.observed_only && "cursor-not-allowed opacity-90",
       )}
       {...listeners}
       {...attributes}
     >
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <code className="text-[11px] text-blue-300/80">
+      <div className="mb-2.5 flex items-start justify-between gap-2">
+        <code className="font-mono text-[11px] text-[var(--accent-bright)]">
           {truncateHash(chunk.chunk_hash, 14)}
         </code>
         <div className="flex shrink-0 gap-1">
           {chunk.pinned && (
             <Badge variant="pinned">
-              <Pin className="mr-0.5 h-2.5 w-2.5" />
+              <Pin className="h-2.5 w-2.5" />
               pinned
             </Badge>
           )}
           {chunk.observed_only && (
             <Badge variant="gpu">
-              <Lock className="mr-0.5 h-2.5 w-2.5" />
+              <Lock className="h-2.5 w-2.5" />
               observed
             </Badge>
           )}
         </div>
       </div>
 
-      <p className="mb-3 line-clamp-3 text-xs leading-relaxed text-slate-300">
+      <p className="mb-3 line-clamp-2 text-[12px] leading-relaxed text-[var(--fg-muted)]">
         {chunk.decoded_preview || (
-          <span className="text-slate-500 italic">No decoded preview</span>
+          <span className="italic text-[var(--fg-subtle)]">
+            No decoded preview
+          </span>
         )}
       </p>
 
-      <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px]">
-        <div>
-          <dt className="text-slate-500">tokens</dt>
-          <dd className="font-medium text-slate-200">{chunk.token_count}</dd>
-        </div>
-        <div>
-          <dt className="text-slate-500">est. KV</dt>
-          <dd className="font-medium text-slate-200">{formatBytes(kvEstimate)}</dd>
-        </div>
-        <div className="col-span-2">
-          <dt className="text-slate-500">prompt</dt>
-          <dd className="truncate font-medium text-slate-300">
-            {truncateHash(chunk.prompt_id, 16)}
-          </dd>
-        </div>
-        <div className="col-span-2">
-          <dt className="text-slate-500">model</dt>
-          <dd className="truncate text-slate-400">{chunk.model}</dd>
-        </div>
-      </dl>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-2 border-t border-[var(--line)] pt-2.5 text-[10.5px]">
+        <Field label="tokens" value={String(chunk.token_count)} mono />
+        <Field label="est. KV" value={formatBytes(kvEstimate)} mono />
+        <Field
+          label="prompt"
+          value={truncateHash(chunk.prompt_id, 16)}
+          mono
+          span
+        />
+        <Field label="model" value={chunk.model} span />
+      </div>
     </article>
+  );
+}
+
+function Field({
+  label,
+  value,
+  mono,
+  span,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  span?: boolean;
+}) {
+  return (
+    <div className={span ? "col-span-2 min-w-0" : "min-w-0"}>
+      <dt className="text-[var(--fg-subtle)]">{label}</dt>
+      <dd
+        className={cn(
+          "truncate text-[var(--fg)]",
+          mono && "font-mono tabular-nums",
+        )}
+      >
+        {value}
+      </dd>
+    </div>
   );
 }

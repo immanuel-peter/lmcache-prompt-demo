@@ -40,6 +40,40 @@ export interface Connectivity {
   vllm_base_url: string;
   lmcache_instance_id: string;
   demo_tenant_id: string;
+  skills_proxy_url?: string;
+  skills_enabled?: boolean;
+}
+
+export interface SkillSummary {
+  id: string;
+  slug: string;
+  name: string;
+  source: string;
+  installs: number;
+  sourceType?: string;
+  installUrl?: string | null;
+  url: string;
+}
+
+export interface InstalledSkill {
+  skill_id: string;
+  name: string;
+  source: string;
+  prompt_id: string;
+  location: string;
+  pinned: boolean;
+  installed_at: string;
+  content_hash?: string | null;
+  installs?: number | null;
+}
+
+export interface SkillInstallResponse {
+  skill_id: string;
+  prompt_id: string;
+  pin_id: string;
+  location: string;
+  pinned: boolean;
+  warning?: string;
 }
 
 export interface PromptRegistrationResponse {
@@ -69,3 +103,51 @@ export const TIER_ORDER: CacheLocation[] = [
   "LocalCPUBackend",
   "LocalDiskBackend",
 ];
+
+export interface ProposedPin {
+  prompt_id: string;
+  location: CacheLocation;
+}
+
+export interface PinRecommendation {
+  prompt_id: string;
+  chunk_hash?: string;
+  synthetic?: boolean;
+  decoded_preview: string;
+  location: CacheLocation;
+  delta_hit_rate: number;
+  projected_hit_rate: number;
+  bytes_to_pin: number;
+  score: number;
+  confidence: string;
+  rationale: string;
+}
+
+export interface PinExtrapolationRequest {
+  tenant_id: string;
+  tier_capacities_gib?: Record<string, number>;
+  lookup_order?: string[];
+  proposed_pins?: ProposedPin[];
+  auto_recommend?: boolean;
+  max_recommendations?: number;
+  request_count?: number;
+  seed?: number;
+}
+
+export interface PinExtrapolationResponse {
+  baseline_token_hit_rate: number;
+  candidate_token_hit_rate: number;
+  delta_hit_rate: number;
+  total_requests: number;
+  total_tokens: number;
+  baseline_hit_tokens: number;
+  candidate_hit_tokens: number;
+  baseline_miss_tokens_by_tier: Record<string, number>;
+  candidate_miss_tokens_by_tier: Record<string, number>;
+  baseline_eviction_count: number;
+  candidate_eviction_count: number;
+  applied_pin_count: number;
+  recommendations: PinRecommendation[];
+  traffic_source: string;
+  warnings: string[];
+}

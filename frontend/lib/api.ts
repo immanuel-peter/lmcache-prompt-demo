@@ -3,7 +3,12 @@ import type {
   CacheChunk,
   CacheSummary,
   Connectivity,
+  InstalledSkill,
+  PinExtrapolationRequest,
+  PinExtrapolationResponse,
   PromptRegistrationResponse,
+  SkillInstallResponse,
+  SkillSummary,
 } from "./types";
 
 const API_BASE =
@@ -108,8 +113,91 @@ export async function ingestEvents(): Promise<void> {
   await request("/api/cache/events:ingest", { method: "POST" });
 }
 
+export async function runPinExtrapolation(
+  body: PinExtrapolationRequest,
+): Promise<PinExtrapolationResponse> {
+  return request<PinExtrapolationResponse>("/api/analysis/pin-extrapolation", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function pinPrompt(
+  promptId: string,
+  tenantId: string,
+  location: string,
+  ttlSeconds = 3600,
+): Promise<{ pin_id: string }> {
+  return request(`/api/prompts/${encodeURIComponent(promptId)}/pin`, {
+    method: "POST",
+    body: JSON.stringify({
+      tenant_id: tenantId,
+      location,
+      owner: "pin-analysis-ui",
+      ttl_seconds: ttlSeconds,
+    }),
+  });
+}
+
 export function getOpenWebUiUrl(): string {
   return process.env.NEXT_PUBLIC_OPENWEBUI_URL ?? "http://localhost:8080";
+}
+
+export async function searchSkills(
+  q: string,
+  limit = 50,
+): Promise<SkillSummary[]> {
+  const data = await request<{ data: SkillSummary[] }>(
+    `/api/skills/search?q=${encodeURIComponent(q)}&limit=${limit}`,
+  );
+  return data.data;
+}
+
+export async function listSkills(
+  view = "all-time",
+  perPage = 15,
+): Promise<SkillSummary[]> {
+  const data = await request<{ data: SkillSummary[] }>(
+    `/api/skills?view=${encodeURIComponent(view)}&per_page=${perPage}`,
+  );
+  return data.data;
+}
+
+export async function fetchInstalledSkills(
+  tenantId: string,
+): Promise<InstalledSkill[]> {
+  const data = await request<{ skills: InstalledSkill[] }>(
+    `/api/skills/installed/list?tenant_id=${encodeURIComponent(tenantId)}`,
+  );
+  return data.skills;
+}
+
+export async function installSkill(
+  skillId: string,
+  tenantId: string,
+  location = "LocalCPUBackend",
+): Promise<SkillInstallResponse> {
+  return request<SkillInstallResponse>("/api/skills/install", {
+    method: "POST",
+    body: JSON.stringify({
+      skill_id: skillId,
+      tenant_id: tenantId,
+      location,
+    }),
+  });
+}
+
+export async function uninstallSkill(
+  skillId: string,
+  tenantId: string,
+): Promise<void> {
+  await request("/api/skills/uninstall", {
+    method: "POST",
+    body: JSON.stringify({
+      skill_id: skillId,
+      tenant_id: tenantId,
+    }),
+  });
 }
 
 export { API_BASE };

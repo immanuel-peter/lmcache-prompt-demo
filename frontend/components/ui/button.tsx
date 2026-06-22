@@ -9,12 +9,13 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variants: Record<ButtonVariant, string> = {
   default:
-    "bg-blue-600 text-white hover:bg-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.25)]",
-  ghost: "bg-transparent hover:bg-white/5 text-slate-300",
+    "bg-[var(--accent)] text-[#06080c] font-semibold hover:bg-[var(--accent-bright)]",
+  ghost:
+    "text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-white/[0.04]",
   outline:
-    "border border-blue-500/30 bg-transparent hover:bg-blue-500/10 text-blue-200",
+    "border border-[var(--line-strong)] text-[var(--fg)] hover:border-[var(--accent-line)] hover:text-[var(--accent-bright)]",
   destructive:
-    "bg-red-950/60 border border-red-500/30 text-red-300 hover:bg-red-900/40",
+    "border border-red-500/25 text-red-300/90 hover:bg-red-500/10 hover:text-red-200",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -22,7 +23,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     <button
       ref={ref}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-40",
+        "inline-flex h-9 items-center justify-center gap-2 rounded-lg px-3.5 text-[13px] font-medium transition-colors disabled:pointer-events-none disabled:opacity-40",
         variants[variant],
         className,
       )}

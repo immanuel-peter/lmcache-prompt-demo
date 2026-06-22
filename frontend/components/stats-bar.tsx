@@ -2,28 +2,13 @@
 
 import type { CacheSummary, Connectivity } from "@/lib/types";
 import { cn, formatBytes } from "@/lib/utils";
-import { Activity, Database, Layers, Pin } from "lucide-react";
 
 interface StatsBarProps {
   summary: CacheSummary | null;
   connectivity: Connectivity | null;
 }
 
-const statItems = [
-  { key: "prompts", icon: Layers, label: "Prompts" },
-  { key: "chunks", icon: Database, label: "Chunks" },
-  { key: "pins", icon: Pin, label: "Active Pins" },
-  { key: "observed", icon: Activity, label: "GPU Observed" },
-] as const;
-
 export function StatsBar({ summary, connectivity }: StatsBarProps) {
-  const values: Record<string, string | number> = {
-    prompts: summary?.total_prompts ?? "—",
-    chunks: summary?.total_chunks ?? "—",
-    pins: summary?.active_pin_leases ?? "—",
-    observed: summary?.observed_only_chunk_count ?? "—",
-  };
-
   const totalBytes = summary
     ? Object.values(summary.estimated_kv_bytes_by_location).reduce(
         (a, b) => a + b,
@@ -31,53 +16,61 @@ export function StatsBar({ summary, connectivity }: StatsBarProps) {
       )
     : 0;
 
-  return (
-    <div className="glass fade-up mb-6 rounded-2xl p-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap gap-6">
-          {statItems.map(({ key, icon: Icon, label }) => (
-            <div key={key} className="flex items-center gap-2">
-              <Icon className="h-4 w-4 text-blue-400/70" />
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-slate-500">
-                  {label}
-                </p>
-                <p className="font-[family-name:var(--font-syne)] text-lg font-semibold text-white">
-                  {values[key]}
-                </p>
-              </div>
-            </div>
-          ))}
-          <div className="flex items-center gap-2">
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-slate-500">
-                Total KV
-              </p>
-              <p className="font-[family-name:var(--font-syne)] text-lg font-semibold text-blue-300">
-                {summary ? formatBytes(totalBytes) : "—"}
-              </p>
-            </div>
-          </div>
-        </div>
+  const stats = [
+    { label: "Prompts", value: summary?.total_prompts ?? "—" },
+    { label: "Chunks", value: summary?.total_chunks ?? "—" },
+    { label: "Active pins", value: summary?.active_pin_leases ?? "—" },
+    { label: "GPU observed", value: summary?.observed_only_chunk_count ?? "—" },
+    {
+      label: "Total KV",
+      value: summary ? formatBytes(totalBytes) : "—",
+      accent: true,
+    },
+  ];
 
-        {connectivity && (
-          <div className="flex flex-wrap items-center gap-2 text-[10px]">
+  return (
+    <div className="panel rise mb-5 flex flex-wrap items-stretch divide-x divide-[var(--line)]">
+      {stats.map((s) => (
+        <div key={s.label} className="flex flex-col gap-1 px-5 py-3.5">
+          <span className="text-[10px] uppercase tracking-[0.14em] text-[var(--fg-subtle)]">
+            {s.label}
+          </span>
+          <span
+            className={cn(
+              "font-mono text-[19px] leading-none tabular-nums",
+              s.accent ? "text-[var(--accent-bright)]" : "text-[var(--fg)]",
+            )}
+          >
+            {s.value}
+          </span>
+        </div>
+      ))}
+
+      {connectivity && (
+        <div className="ml-auto flex items-center gap-2.5 px-5">
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 text-[11px] font-medium",
+              connectivity.mode === "proxy"
+                ? "text-[#86efac]"
+                : "text-[var(--accent-bright)]",
+            )}
+          >
             <span
               className={cn(
-                "rounded-full border px-2.5 py-1 font-semibold uppercase tracking-wider",
+                "h-1.5 w-1.5 rounded-full",
                 connectivity.mode === "proxy"
-                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-                  : "border-blue-500/30 bg-blue-500/10 text-blue-300",
+                  ? "bg-[#4ade80]"
+                  : "bg-[var(--accent)]",
               )}
-            >
-              {connectivity.mode} mode
-            </span>
-            <span className="text-slate-500">
-              tenant: {connectivity.demo_tenant_id}
-            </span>
-          </div>
-        )}
-      </div>
+            />
+            {connectivity.mode} mode
+          </span>
+          <span className="font-mono text-[11px] text-[var(--fg-subtle)]">
+            {connectivity.demo_tenant_id}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

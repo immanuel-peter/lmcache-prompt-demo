@@ -18,6 +18,7 @@ class Settings:
     demo_tenant_id: str
     sqlite_path: str
     cors_origins: str
+    skills_proxy_url: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -39,7 +40,13 @@ class Settings:
             demo_tenant_id=os.getenv("DEMO_TENANT_ID", "demo-tenant"),
             sqlite_path=os.getenv("SQLITE_PATH", ".demo_catalog.sqlite3"),
             cors_origins=os.getenv("CORS_ORIGINS", "*"),
+            skills_proxy_url=os.getenv("SKILLS_PROXY_URL", "").rstrip("/"),
         )
+
+    @property
+    def use_skills_proxy(self) -> bool:
+        """Return whether skills.sh requests should go through the sidecar."""
+        return bool(self.skills_proxy_url)
 
     @property
     def use_proxy(self) -> bool:

@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Syne } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const syne = Syne({
-  variable: "--font-syne",
+const geist = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
 });
 
-const plexMono = IBM_Plex_Mono({
-  variable: "--font-plex-mono",
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -29,20 +29,21 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${syne.variable} ${plexMono.variable} h-full antialiased`}
+      className={`${geist.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full mesh-bg">
-        <div className="pointer-events-none fixed inset-0 grid-overlay" />
+      <body className="app-bg min-h-full">
         {children}
         <Toaster
           theme="dark"
           position="bottom-right"
           toastOptions={{
             style: {
-              background: "rgba(15, 23, 42, 0.95)",
-              border: "1px solid rgba(59, 130, 246, 0.25)",
-              color: "#e2e8f0",
-              fontFamily: "var(--font-plex-mono)",
+              background: "#0c0e12",
+              border: "1px solid rgba(255,255,255,0.1)",
+              color: "#e7eaee",
+              fontFamily: "var(--font-geist)",
+              fontSize: "13px",
+              borderRadius: "10px",
             },
           }}
         />

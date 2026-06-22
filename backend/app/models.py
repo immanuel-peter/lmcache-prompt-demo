@@ -231,6 +231,75 @@ class BackendCapabilitiesResponse(BaseModel):
     capabilities: list[BackendCapability]
 
 
+class SkillSummary(BaseModel):
+    """skills.sh catalog entry."""
+
+    id: str
+    slug: str
+    name: str
+    source: str
+    installs: int = Field(ge=0)
+    source_type: str = Field(default="github", alias="sourceType")
+    install_url: str | None = Field(default=None, alias="installUrl")
+    url: str = ""
+
+
+class InstalledSkill(BaseModel):
+    """Locally staged and pinned skill."""
+
+    skill_id: str
+    name: str
+    source: str
+    prompt_id: str
+    location: str
+    pinned: bool = True
+    installed_at: str = ""
+    content_hash: str | None = None
+    installs: int | None = None
+
+
+class InstalledSkillsResponse(BaseModel):
+    """Installed skills for a tenant."""
+
+    skills: list[InstalledSkill]
+
+
+class SkillInstallRequest(BaseModel):
+    """Request body for staging a skill into KV cache."""
+
+    skill_id: str = Field(min_length=1)
+    tenant_id: str = ""
+    location: CacheLocation = CacheLocation.LOCAL_CPU
+    ttl_seconds: int = Field(default=86400, gt=0)
+
+
+class SkillInstallResponse(BaseModel):
+    """Response after staging and pinning a skill."""
+
+    skill_id: str
+    prompt_id: str
+    pin_id: str = ""
+    location: str
+    pinned: bool = True
+    warning: str = ""
+
+
+class SkillUninstallRequest(BaseModel):
+    """Request body for removing a staged skill."""
+
+    skill_id: str = Field(min_length=1)
+    tenant_id: str = ""
+
+
+class SkillUninstallResponse(BaseModel):
+    """Response after evicting a staged skill."""
+
+    skill_id: str
+    prompt_id: str
+    evicted: bool = True
+    warning: str = ""
+
+
 class ConnectivityResponse(BaseModel):
     """Reachability status for configured upstream services."""
 
@@ -241,3 +310,61 @@ class ConnectivityResponse(BaseModel):
     vllm_base_url: str
     lmcache_instance_id: str
     demo_tenant_id: str
+    skills_proxy_url: str = ""
+    skills_enabled: bool = False
+
+
+class ProposedPin(BaseModel):
+    """Manual pin scenario for extrapolation."""
+
+    prompt_id: str = Field(min_length=1)
+    location: CacheLocation
+
+
+class PinRecommendation(BaseModel):
+    """Suggested prompt pin with projected hit-rate lift."""
+
+    prompt_id: str
+    chunk_hash: str = ""
+    synthetic: bool = False
+    decoded_preview: str = ""
+    location: CacheLocation
+    delta_hit_rate: float = Field(ge=0)
+    projected_hit_rate: float = Field(ge=0, le=1)
+    bytes_to_pin: int = Field(ge=0)
+    score: float = 0.0
+    confidence: str = "medium"
+    rationale: str = ""
+
+
+class PinExtrapolationRequest(BaseModel):
+    """Request body for pin extrapolation analysis."""
+
+    tenant_id: str = Field(min_length=1)
+    tier_capacities_gib: dict[str, float] = Field(default_factory=dict)
+    lookup_order: list[str] = Field(default_factory=list)
+    proposed_pins: list[ProposedPin] = Field(default_factory=list)
+    auto_recommend: bool = True
+    max_recommendations: int = Field(default=5, ge=1, le=20)
+    request_count: int = Field(default=240, ge=10, le=5000)
+    seed: int = 42
+
+
+class PinExtrapolationResponse(BaseModel):
+    """Extrapolated cache hit-rate impact of prompt pinning."""
+
+    baseline_token_hit_rate: float = Field(ge=0, le=1)
+    candidate_token_hit_rate: float = Field(ge=0, le=1)
+    delta_hit_rate: float
+    total_requests: int = Field(ge=0)
+    total_tokens: int = Field(ge=0)
+    baseline_hit_tokens: int = Field(ge=0)
+    candidate_hit_tokens: int = Field(ge=0)
+    baseline_miss_tokens_by_tier: dict[str, int] = Field(default_factory=dict)
+    candidate_miss_tokens_by_tier: dict[str, int] = Field(default_factory=dict)
+    baseline_eviction_count: int = Field(ge=0)
+    candidate_eviction_count: int = Field(ge=0)
+    applied_pin_count: int = Field(ge=0)
+    recommendations: list[PinRecommendation] = Field(default_factory=list)
+    traffic_source: str = "catalog_replay"
+    warnings: list[str] = Field(default_factory=list)

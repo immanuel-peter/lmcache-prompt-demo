@@ -11,6 +11,13 @@ from app.models import (
     CacheSummaryResponse,
     CacheLocation,
     ConnectivityResponse,
+    InstalledSkillsResponse,
+    PinExtrapolationRequest,
+    PinExtrapolationResponse,
+    SkillInstallRequest,
+    SkillInstallResponse,
+    SkillUninstallRequest,
+    SkillUninstallResponse,
     PromptEvictRequest,
     PromptEvictResponse,
     PromptLookupRequest,
@@ -25,6 +32,8 @@ from app.models import (
     PromptUnpinRequest,
     PromptUnpinResponse,
 )
+from app.pin_analysis import catalog_from_chunks, run_pin_extrapolation
+from app.skills_install import install_skill, uninstall_skill
 
 router = APIRouter()
 
@@ -47,6 +56,8 @@ async def connectivity(request: Request) -> ConnectivityResponse:
         vllm_base_url=settings.vllm_base_url,
         lmcache_instance_id=settings.lmcache_instance_id,
         demo_tenant_id=settings.demo_tenant_id,
+        skills_proxy_url=settings.skills_proxy_url,
+        skills_enabled=settings.use_skills_proxy,
     )
 
 
@@ -306,3 +317,133 @@ async def ingest_events(request: Request, since: str = "") -> dict[str, object]:
     if request.app.state.proxy:
         return await request.app.state.proxy.ingest_events(since)
     return {"ingested_events": 0, "ingested_chunks": 0, "next_cursor": ""}
+
+
+@router.post(
+    "/api/analysis/pin-extrapolation", response_model=PinExtrapolationResponse
+)
+async def pin_extrapolation(
+    request: Request, body: PinExtrapolationRequest
+) -> PinExtrapolationResponse:
+    """Extrapolate cache hit-rate impact of pinning prompts to backends."""
+    settings = request.app.state.settings
+    tenant_id = body.tenant_id or settings.demo_tenant_id
+
+    if request.app.state.proxy:
+        chunk_data = await request.app.state.proxy.list_chunks(
+            tenant_id=tenant_id,
+            limit=500,
+            offset=0,
+            include_debug=True,
+        )
+        prompts, chunks, catalog_warnings = catalog_from_chunks(chunk_data["chunks"])
+    else:
+        prompts, chunks = request.app.state.catalog.analysis_catalog(tenant_id)
+        catalog_warnings = []
+
+    return run_pin_extrapolation(
+        body,
+        prompts=prompts,
+        chunks=chunks,
+        catalog_warnings=catalog_warnings,
+    )
+
+
+def _require_skills_proxy(request: Request):
+    """Return the skills proxy client or raise 503."""
+    proxy = request.app.state.skills_proxy
+    if proxy is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Skills catalog is not configured. Set SKILLS_PROXY_URL.",
+        )
+    return proxy
+
+
+@router.get("/api/skills")
+async def list_skills(
+    request: Request,
+    view: str = "all-time",
+    page: int = 0,
+    per_page: int = Query(default=100, ge=1, le=500),
+) -> dict[str, object]:
+    """List skills from the skills.sh leaderboard."""
+    proxy = _require_skills_proxy(request)
+    return await proxy.list_skills(view=view, page=page, per_page=per_page)
+
+
+@router.get("/api/skills/search")
+async def search_skills(
+    request: Request,
+    q: str = Query(min_length=2),
+    limit: int = Query(default=50, ge=1, le=200),
+) -> dict[str, object]:
+    """Search skills.sh by name or description."""
+    proxy = _require_skills_proxy(request)
+    return await proxy.search_skills(q=q, limit=limit)
+
+
+@router.get("/api/skills/curated")
+async def curated_skills(request: Request) -> dict[str, object]:
+    """Return the official curated skills set."""
+    proxy = _require_skills_proxy(request)
+    return await proxy.curated_skills()
+
+
+@router.get("/api/skills/installed/list", response_model=InstalledSkillsResponse)
+async def list_installed_skills(
+    request: Request, tenant_id: str = ""
+) -> InstalledSkillsResponse:
+    """Return skills staged and pinned for the tenant."""
+    settings = request.app.state.settings
+    resolved_tenant = tenant_id or settings.demo_tenant_id
+    skills = request.app.state.skill_installs.list_installed(resolved_tenant)
+    return InstalledSkillsResponse(skills=skills)
+
+
+@router.post("/api/skills/install", response_model=SkillInstallResponse)
+async def stage_skill(
+    request: Request, body: SkillInstallRequest
+) -> SkillInstallResponse:
+    """Stage a skills.sh entry into KV cache and pin it."""
+    settings = request.app.state.settings
+    proxy = _require_skills_proxy(request)
+    tenant_id = body.tenant_id or settings.demo_tenant_id
+    return await install_skill(
+        request=body,
+        tenant_id=tenant_id,
+        instance_id=settings.lmcache_instance_id,
+        default_model="meta-llama/Llama-3.1-8B-Instruct",
+        skills_proxy=proxy,
+        catalog=request.app.state.catalog,
+        kv_proxy=request.app.state.proxy,
+        store=request.app.state.skill_installs,
+    )
+
+
+@router.post("/api/skills/uninstall", response_model=SkillUninstallResponse)
+async def remove_skill(
+    request: Request, body: SkillUninstallRequest
+) -> SkillUninstallResponse:
+    """Evict a staged skill and remove its install record."""
+    settings = request.app.state.settings
+    tenant_id = body.tenant_id or settings.demo_tenant_id
+    try:
+        return await uninstall_skill(
+            request=body,
+            tenant_id=tenant_id,
+            catalog=request.app.state.catalog,
+            kv_proxy=request.app.state.proxy,
+            store=request.app.state.skill_installs,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/api/skills/{skill_path:path}")
+async def skill_detail(request: Request, skill_path: str) -> dict[str, object]:
+    """Return skill metadata and files for a skills.sh id."""
+    proxy = _require_skills_proxy(request)
+    if skill_path.startswith("audit/"):
+        return await proxy.skill_audit(skill_path.removeprefix("audit/"))
+    return await proxy.skill_detail(skill_path)

@@ -1,6 +1,6 @@
 version: "1.0"
-name: lmcache-prompt-demo
-description: Visual demo for LMCache prompt registry — chunk residency, pin/evict, and Open WebUI chat.
+name: lmcache-demo
+description: LMCache prompt registry demo
 
 services:
   frontend:
@@ -13,6 +13,18 @@ services:
     depends_on:
       - api
 
+  skills-proxy:
+    type: custom
+    build:
+      source: ./skills-proxy
+    ports: [8787]
+    health:
+      http: /health
+    env:
+      VERCEL_TOKEN: ${secret:VERCEL_TOKEN}
+      VERCEL_ORG_ID: ${secret:VERCEL_ORG_ID}
+      VERCEL_PROJECT_ID: ${secret:VERCEL_PROJECT_ID}
+
   api:
     type: custom
     build:
@@ -23,6 +35,8 @@ services:
     persistence:
       mount: /data
       size: 1Gi
+    depends_on:
+      - skills-proxy
     env:
       # Leave empty to use built-in demo catalog; set to proxy a live LMCache KV service.
       LMCACHE_KV_SERVICE_URL: ${secret:LMCACHE_KV_SERVICE_URL}
@@ -36,6 +50,7 @@ services:
       DEMO_TENANT_ID: demo-tenant
       SQLITE_PATH: /data/catalog.sqlite3
       CORS_ORIGINS: "*"
+      SKILLS_PROXY_URL: ${skills-proxy.url}
 
   openwebui:
     type: custom

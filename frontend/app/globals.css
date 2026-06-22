@@ -1,25 +1,43 @@
 @import "tailwindcss";
 
 :root {
-  --background: #030712;
-  --foreground: #e2e8f0;
-  --accent: #3b82f6;
-  --accent-glow: #60a5fa;
-  --surface: rgba(15, 23, 42, 0.72);
-  --surface-border: rgba(59, 130, 246, 0.18);
-  --gpu: #f59e0b;
-  --cpu: #22d3ee;
-  --disk: #818cf8;
-  --muted: #64748b;
+  /* Canvas */
+  --bg: #07080a;
+  --bg-soft: #0a0c0f;
+
+  /* Text */
+  --fg: #e7eaee;
+  --fg-muted: #8a909b;
+  --fg-subtle: #565c66;
+
+  /* Single accent — electric blue */
+  --accent: #4f8ff7;
+  --accent-bright: #7eb0ff;
+  --accent-soft: rgba(79, 143, 247, 0.12);
+  --accent-line: rgba(79, 143, 247, 0.28);
+
+  /* Hairlines & surfaces */
+  --line: rgba(255, 255, 255, 0.07);
+  --line-strong: rgba(255, 255, 255, 0.12);
+  --panel: rgba(255, 255, 255, 0.018);
+  --panel-hover: rgba(255, 255, 255, 0.035);
+
+  /* Tier identity — muted dots only */
+  --gpu: #d99a3a;
+  --cpu: #4f8ff7;
+  --disk: #8b8ff5;
+
+  /* Semantic */
+  --pos: #4ade80;
+  --neg: #f87171;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
   --color-accent: var(--accent);
-  --color-surface: var(--surface);
-  --font-sans: var(--font-syne);
-  --font-mono: var(--font-plex-mono);
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 * {
@@ -31,97 +49,126 @@ html {
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv01";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
 }
 
-.mesh-bg {
+/* Ultra-subtle atmosphere — one cool wash from the top, no mesh, no grid */
+.app-bg {
   background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.28), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(99, 102, 241, 0.12), transparent),
-    radial-gradient(ellipse 50% 30% at 0% 100%, rgba(14, 165, 233, 0.08), transparent),
-    linear-gradient(180deg, #020617 0%, #030712 40%, #0a0f1e 100%);
+    radial-gradient(
+      120% 60% at 50% -10%,
+      rgba(79, 143, 247, 0.08),
+      transparent 60%
+    ),
+    var(--bg);
 }
 
-.grid-overlay {
-  background-image:
-    linear-gradient(rgba(59, 130, 246, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(59, 130, 246, 0.04) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 90% 80% at 50% 30%, black, transparent);
+/* Panel — hairline border, faint fill, no heavy blur/glow */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
 }
 
-.glass {
-  background: var(--surface);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--surface-border);
+.panel-hover {
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+.panel-hover:hover {
+  background: var(--panel-hover);
+  border-color: var(--line-strong);
 }
 
-.glow-text {
-  text-shadow: 0 0 24px rgba(96, 165, 250, 0.45);
-}
-
+/* Tier accent — exposed as a CSS var for dots / hairlines */
 .tier-gpu {
-  --tier-color: var(--gpu);
+  --tier: var(--gpu);
 }
-
 .tier-cpu {
-  --tier-color: var(--cpu);
+  --tier: var(--cpu);
 }
-
 .tier-disk {
-  --tier-color: var(--disk);
+  --tier: var(--disk);
 }
 
-@keyframes pulse-glow {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-  }
-  50% {
-    box-shadow: 0 0 24px 2px rgba(59, 130, 246, 0.15);
-  }
+.tier-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--tier, var(--accent));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tier, var(--accent)) 16%, transparent);
 }
 
-.animate-pulse-glow {
-  animation: pulse-glow 3s ease-in-out infinite;
+/* Chunk card lift — restrained */
+.card {
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+.card:hover {
+  border-color: var(--line-strong);
+  background: var(--panel-hover);
+}
+.card.dragging {
+  opacity: 0.4;
 }
 
-@keyframes fade-up {
+.drop-active {
+  border-color: var(--accent-line) !important;
+  background: var(--accent-soft) !important;
+}
+
+/* Entrance — single soft reveal, no glow */
+@keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
-
-.fade-up {
-  animation: fade-up 0.5s ease-out forwards;
+.rise {
+  animation: rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-.chunk-card {
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    border-color 0.2s ease;
+.stagger > * {
+  opacity: 0;
+  animation: rise 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 55ms;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 110ms;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 165ms;
 }
 
-.chunk-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.12);
+/* Thin custom scrollbar inside tiers */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
 }
-
-.chunk-card.dragging {
-  opacity: 0.5;
-  transform: scale(1.02);
+.scroll-thin::-webkit-scrollbar {
+  width: 6px;
 }
-
-.drop-zone-active {
-  border-color: rgba(59, 130, 246, 0.6) !important;
-  background: rgba(59, 130, 246, 0.06);
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
+}
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
 }

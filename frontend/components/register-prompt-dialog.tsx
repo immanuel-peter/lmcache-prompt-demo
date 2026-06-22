@@ -49,32 +49,32 @@ export function RegisterPromptDialog({
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} className="gap-2">
-        <Plus className="h-4 w-4" />
+      <Button onClick={() => setOpen(true)}>
+        <Plus className="h-3.5 w-3.5" />
         Register Prompt
       </Button>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/75 backdrop-blur-[2px]"
             onClick={() => setOpen(false)}
           />
           <form
             onSubmit={handleSubmit}
             className={cn(
-              "glass relative z-10 w-full max-w-lg rounded-2xl p-6",
-              "fade-up shadow-[0_0_60px_rgba(59,130,246,0.15)]",
+              "panel rise relative z-10 w-full max-w-lg p-6",
+              "border-[var(--line-strong)] bg-[var(--bg-soft)] shadow-2xl shadow-black/60",
             )}
           >
             <div className="mb-5 flex items-center justify-between">
-              <h3 className="font-[family-name:var(--font-syne)] text-lg font-semibold text-white glow-text">
+              <h3 className="text-[16px] font-semibold tracking-tight text-[var(--fg)]">
                 Register Prompt
               </h3>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-white/5 hover:text-white"
+                className="rounded-lg p-1 text-[var(--fg-subtle)] transition-colors hover:bg-white/5 hover:text-[var(--fg)]"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -82,7 +82,7 @@ export function RegisterPromptDialog({
 
             <div className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-xs text-slate-400">
+                <label className="mb-1.5 block text-[11px] uppercase tracking-wide text-[var(--fg-subtle)]">
                   Model / Tokenizer
                 </label>
                 <Input
@@ -93,7 +93,7 @@ export function RegisterPromptDialog({
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs text-slate-400">
+                <label className="mb-1.5 block text-[11px] uppercase tracking-wide text-[var(--fg-subtle)]">
                   Prompt text
                 </label>
                 <Textarea
@@ -105,7 +105,7 @@ export function RegisterPromptDialog({
                 />
               </div>
               {error && (
-                <p className="rounded-lg border border-red-500/30 bg-red-950/30 px-3 py-2 text-xs text-red-300">
+                <p className="rounded-lg border border-red-500/25 bg-red-500/[0.06] px-3 py-2 text-[12px] text-red-300">
                   {error}
                 </p>
               )}
