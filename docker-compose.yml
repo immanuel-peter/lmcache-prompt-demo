@@ -30,7 +30,9 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-*}
       SKILLS_PROXY_URL: ${SKILLS_PROXY_URL:-http://skills-proxy:8787}
       # Browser-facing Open WebUI URL, surfaced to the frontend via /api/connectivity.
-      OPENWEBUI_URL: ${OPENWEBUI_URL:-http://localhost:8080}
+      # Defaults to the same host port used in the openwebui mapping below, so
+      # OPENWEBUI_PORT is the single knob; override OPENWEBUI_URL for non-local hosts.
+      OPENWEBUI_URL: ${OPENWEBUI_URL:-http://localhost:${OPENWEBUI_PORT:-8080}}
     volumes:
       - api-data:/data
     depends_on:

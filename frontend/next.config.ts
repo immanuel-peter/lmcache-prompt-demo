@@ -1,24 +1,10 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  // SSR proxy: the browser only ever calls the frontend's own origin (`/api/*`),
-  // and the Next.js server forwards those requests to the backend. `rewrites()`
-  // runs when the server boots (`next start` loads this file at runtime), so
-  // BACKEND_URL is resolved at runtime in the container — unlike NEXT_PUBLIC_*
-  // values, which are inlined into the client bundle at build time and cannot
-  // be re-pointed afterward (the Hostess "runtime resolution doesn't happen for
-  // images" problem). The API can therefore stay on an internal-only URL.
-  async rewrites() {
-    const backendUrl = (
-      process.env.BACKEND_URL ?? "http://localhost:8000"
-    ).replace(/\/$/, "");
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${backendUrl}/api/:path*`,
-      },
-    ];
-  },
-};
+// API requests are proxied to the backend by a route handler at runtime
+// (app/api/[...path]/route.ts), which reads BACKEND_URL per request. We
+// deliberately do NOT use next.config `rewrites()` for this: its destination is
+// evaluated at build time and frozen into the routes manifest, so it cannot be
+// re-pointed at runtime (the Hostess "no runtime resolution for images" problem).
+const nextConfig: NextConfig = {};
 
 export default nextConfig;
