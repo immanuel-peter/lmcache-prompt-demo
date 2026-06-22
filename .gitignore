@@ -12,3 +12,4 @@ __pycache__/
 .logs/
 .vercel
 .env*.local
+.env.hostess
