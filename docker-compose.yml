@@ -29,6 +29,8 @@ services:
       SQLITE_PATH: /data/catalog.sqlite3
       CORS_ORIGINS: ${CORS_ORIGINS:-*}
       SKILLS_PROXY_URL: ${SKILLS_PROXY_URL:-http://skills-proxy:8787}
+      # Browser-facing Open WebUI URL, surfaced to the frontend via /api/connectivity.
+      OPENWEBUI_URL: ${OPENWEBUI_URL:-http://localhost:8080}
     volumes:
       - api-data:/data
     depends_on:
@@ -43,9 +45,9 @@ services:
   frontend:
     build:
       context: ./frontend
-      args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
-        NEXT_PUBLIC_OPENWEBUI_URL: ${NEXT_PUBLIC_OPENWEBUI_URL:-http://localhost:8080}
+    environment:
+      # Runtime-resolved: Next.js SSR proxies /api/* to the internal api service.
+      BACKEND_URL: ${BACKEND_URL:-http://api:8000}
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:

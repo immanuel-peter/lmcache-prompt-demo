@@ -8,8 +8,10 @@ services:
     build:
       source: ./frontend
     env:
-      NEXT_PUBLIC_API_URL: ${api.external_url}
-      NEXT_PUBLIC_OPENWEBUI_URL: ${openwebui.external_url}
+      # Server-side only, resolved at runtime. The Next.js server proxies /api/*
+      # to this internal URL (see frontend/next.config.ts), so the browser never
+      # talks to the API directly and the API needs no public/external URL.
+      BACKEND_URL: ${api.url}
     depends_on:
       - api
 
@@ -51,6 +53,9 @@ services:
       SQLITE_PATH: /data/catalog.sqlite3
       CORS_ORIGINS: "*"
       SKILLS_PROXY_URL: ${skills-proxy.url}
+      # Browser-facing link to Open WebUI, surfaced to the frontend via
+      # /api/connectivity so it resolves at runtime (public URL the browser opens).
+      OPENWEBUI_URL: ${openwebui.external_url}
 
   openwebui:
     type: custom

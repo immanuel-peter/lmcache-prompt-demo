@@ -13,11 +13,9 @@ WORKDIR /app
 
 RUN corepack enable
 
-ARG NEXT_PUBLIC_API_URL=http://localhost:8000
-ARG NEXT_PUBLIC_OPENWEBUI_URL=http://localhost:8080
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_OPENWEBUI_URL=$NEXT_PUBLIC_OPENWEBUI_URL
-
+# No URLs are baked into the bundle. The backend URL is read at runtime via
+# BACKEND_URL and proxied by the Next.js server (see next.config.ts); the Open
+# WebUI link is resolved at runtime from the backend's /api/connectivity.
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm build

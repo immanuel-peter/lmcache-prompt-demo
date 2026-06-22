@@ -58,6 +58,7 @@ async def connectivity(request: Request) -> ConnectivityResponse:
         demo_tenant_id=settings.demo_tenant_id,
         skills_proxy_url=settings.skills_proxy_url,
         skills_enabled=settings.use_skills_proxy,
+        openwebui_url=settings.openwebui_url,
     )
 
 

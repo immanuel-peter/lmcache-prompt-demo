@@ -3,10 +3,10 @@
 import { PinAnalysisPanel } from "@/components/pin-analysis-panel";
 import { PromptRegistryDemo } from "@/components/prompt-registry";
 import { SkillsPanel } from "@/components/skills-panel";
-import { getOpenWebUiUrl } from "@/lib/api";
+import { fetchConnectivity, getOpenWebUiUrl } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { ArrowUpRight, Layers, LineChart, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type AppTab = "registry" | "analysis" | "skills";
 
@@ -46,7 +46,21 @@ const TABS: {
 export function AppShell() {
   const [tab, setTab] = useState<AppTab>("registry");
   const active = TABS.find((t) => t.id === tab)!;
-  const openWebUiUrl = getOpenWebUiUrl();
+
+  // Resolve the Open WebUI link at runtime from the backend (proxied via SSR)
+  // rather than a build-time NEXT_PUBLIC value. Falls back to the env default
+  // until connectivity loads.
+  const [openWebUiUrl, setOpenWebUiUrl] = useState(getOpenWebUiUrl);
+
+  useEffect(() => {
+    fetchConnectivity()
+      .then((conn) => {
+        if (conn.openwebui_url) setOpenWebUiUrl(conn.openwebui_url);
+      })
+      .catch(() => {
+        /* keep the fallback URL */
+      });
+  }, []);
 
   return (
     <div className="flex min-h-screen flex-col">

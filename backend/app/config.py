@@ -19,6 +19,7 @@ class Settings:
     sqlite_path: str
     cors_origins: str
     skills_proxy_url: str
+    openwebui_url: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -41,6 +42,9 @@ class Settings:
             sqlite_path=os.getenv("SQLITE_PATH", ".demo_catalog.sqlite3"),
             cors_origins=os.getenv("CORS_ORIGINS", "*"),
             skills_proxy_url=os.getenv("SKILLS_PROXY_URL", "").rstrip("/"),
+            openwebui_url=os.getenv("OPENWEBUI_URL", "http://localhost:8080").rstrip(
+                "/"
+            ),
         )
 
     @property

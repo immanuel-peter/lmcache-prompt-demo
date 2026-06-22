@@ -11,8 +11,11 @@ import type {
   SkillSummary,
 } from "./types";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:8000";
+// Default to same-origin so all calls go to `/api/*` on the frontend, which the
+// Next.js server proxies to the backend (see next.config.ts rewrites). This
+// keeps the backend URL out of the client bundle and lets it resolve at runtime.
+// NEXT_PUBLIC_API_URL remains an optional override to hit the backend directly.
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {

@@ -312,6 +312,7 @@ class ConnectivityResponse(BaseModel):
     demo_tenant_id: str
     skills_proxy_url: str = ""
     skills_enabled: bool = False
+    openwebui_url: str = ""
 
 
 class ProposedPin(BaseModel):

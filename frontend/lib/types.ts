@@ -42,6 +42,7 @@ export interface Connectivity {
   demo_tenant_id: string;
   skills_proxy_url?: string;
   skills_enabled?: boolean;
+  openwebui_url?: string;
 }
 
 export interface SkillSummary {
