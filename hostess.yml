@@ -1,0 +1,67 @@
+version: "1.0"
+name: lmcache-prompt-demo
+description: Visual demo for LMCache prompt registry — chunk residency, pin/evict, and Open WebUI chat.
+
+services:
+  frontend:
+    type: nextjs
+    build:
+      source: ./frontend
+    env:
+      NEXT_PUBLIC_API_URL: ${api.external_url}
+      NEXT_PUBLIC_OPENWEBUI_URL: ${openwebui.external_url}
+    depends_on:
+      - api
+
+  api:
+    type: custom
+    build:
+      source: ./backend
+    ports: [8000]
+    health:
+      http: /health
+    persistence:
+      mount: /data
+      size: 1Gi
+    env:
+      # Leave empty to use built-in demo catalog; set to proxy a live LMCache KV service.
+      LMCACHE_KV_SERVICE_URL: ${secret:LMCACHE_KV_SERVICE_URL}
+      # LMCache controller API (token-level pin/evict/move).
+      LMCACHE_CONTROLLER_URL: ""
+      # LMCache MP HTTP server (runtime events).
+      LMCACHE_RUNTIME_URL: ""
+      # vLLM OpenAI-compatible API for Open WebUI.
+      VLLM_BASE_URL: ${secret:VLLM_BASE_URL}
+      LMCACHE_INSTANCE_ID: lmcache_default_instance
+      DEMO_TENANT_ID: demo-tenant
+      SQLITE_PATH: /data/catalog.sqlite3
+      CORS_ORIGINS: "*"
+
+  openwebui:
+    type: custom
+    image: openwebui/open-webui:latest
+    public: true
+    ports: [8080]
+    health:
+      http: /health
+    env:
+      OPENAI_API_BASE_URL: ${secret:OPENAI_API_BASE_URL}
+      OPENAI_API_KEY: ${secret:OPENAI_API_KEY}
+      WEBUI_NAME: LMCache Prompt Demo
+      ENABLE_SIGNUP: "false"
+      DEFAULT_MODELS: meta-llama/Llama-3.1-8B-Instruct
+
+      # No local Ollama
+      ENABLE_OLLAMA_API: "false"
+
+      # Block HuggingFace embedding/reranker downloads
+      HF_HUB_OFFLINE: "1"
+      RAG_EMBEDDING_MODEL_AUTO_UPDATE: "false"
+      RAG_RERANKING_MODEL_AUTO_UPDATE: "false"
+
+      # Disable RAG-adjacent features
+      ENABLE_MEMORIES: "false"
+
+      # Hide RAG UI for users
+      USER_PERMISSIONS_WORKSPACE_KNOWLEDGE_ACCESS: "false"
+      USER_PERMISSIONS_FEATURES_MEMORIES: "false"

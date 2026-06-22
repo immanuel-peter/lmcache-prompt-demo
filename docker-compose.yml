@@ -1,0 +1,57 @@
+services:
+  api:
+    build:
+      context: ./backend
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      LMCACHE_KV_SERVICE_URL: ${LMCACHE_KV_SERVICE_URL:-}
+      LMCACHE_CONTROLLER_URL: ${LMCACHE_CONTROLLER_URL:-}
+      LMCACHE_RUNTIME_URL: ${LMCACHE_RUNTIME_URL:-}
+      VLLM_BASE_URL: ${VLLM_BASE_URL:-}
+      LMCACHE_INSTANCE_ID: ${LMCACHE_INSTANCE_ID:-lmcache_default_instance}
+      DEMO_TENANT_ID: ${DEMO_TENANT_ID:-demo-tenant}
+      SQLITE_PATH: /data/catalog.sqlite3
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+    volumes:
+      - api-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        NEXT_PUBLIC_OPENWEBUI_URL: ${NEXT_PUBLIC_OPENWEBUI_URL:-http://localhost:8080}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  openwebui:
+    image: openwebui/open-webui:latest
+    ports:
+      - "${OPENWEBUI_PORT:-8080}:8080"
+    environment:
+      OPENAI_API_BASE_URL: ${OPENAI_API_BASE_URL:-}
+      OPENAI_API_KEY: ${VLLM_API_KEY:-demo-key}
+      WEBUI_NAME: LMCache Prompt Demo
+      ENABLE_SIGNUP: "false"
+      ENABLE_OLLAMA_API: "false"
+      HF_HUB_OFFLINE: "1"
+      RAG_EMBEDDING_MODEL_AUTO_UPDATE: "false"
+      RAG_RERANKING_MODEL_AUTO_UPDATE: "false"
+      ENABLE_MEMORIES: "false"
+      USER_PERMISSIONS_WORKSPACE_KNOWLEDGE_ACCESS: "false"
+      USER_PERMISSIONS_FEATURES_MEMORIES: "false"
+    volumes:
+      - openwebui-data:/app/backend/data
+
+volumes:
+  api-data:
+  openwebui-data:

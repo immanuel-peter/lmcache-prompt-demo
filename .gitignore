@@ -1,0 +1,12 @@
+lmcache-prompt-demo/
+node_modules/
+.pnpm-store/
+.next/
+out/
+.venv/
+__pycache__/
+*.sqlite3
+.env
+.env.local
+.DS_Store
+.logs/

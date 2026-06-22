@@ -1,0 +1,10 @@
+# Extra Python packages for scripts/start.py (GPU + vLLM stack).
+#
+# Install everything with:
+#   python scripts/setup_gpu_env.py
+#
+# Do NOT `pip install -r` this file alone — setup_gpu_env.py also installs
+# torch, vLLM (CUDA-matched wheels), and LMCache from the local checkout.
+
+# FlashInfer JIT compilation during vLLM warmup
+ninja>=1.11
