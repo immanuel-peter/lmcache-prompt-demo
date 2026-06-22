@@ -41,7 +41,7 @@ services:
       # Leave empty to use built-in demo catalog; set to proxy a live LMCache KV service.
       LMCACHE_KV_SERVICE_URL: ${secret:LMCACHE_KV_SERVICE_URL}
       # LMCache controller API (token-level pin/evict/move).
-      LMCACHE_CONTROLLER_URL: ""
+      LMCACHE_CONTROLLER_URL: ${secret:LMCACHE_CONTROLLER_URL}
       # LMCache MP HTTP server (runtime events).
       LMCACHE_RUNTIME_URL: ""
       # vLLM OpenAI-compatible API for Open WebUI.
